@@ -50,9 +50,10 @@ pub struct OrderBuilder {
 }
 
 /// Rounding configurations for different tick sizes
-/// Note: For BUY orders, maker_amount is USDC (max 2 decimals per API)
-///       For SELL orders, taker_amount is USDC (max 4 decimals per API)
-/// The 'amount' field controls rounding for the computed USDC amount (price * size)
+/// Note: For BUY orders, maker_amount is USDC. API requires exact precision (3 decimals).
+///       For SELL orders, taker_amount is USDC (max 4 decimals per API).
+/// The 'amount' field controls rounding for the computed USDC amount (price * size).
+/// Setting to 3 decimals to match API expectation (e.g., 29.99 @ 0.60 = 17.994, not 17.99).
 static ROUNDING_CONFIG: LazyLock<HashMap<Decimal, RoundConfig>> = LazyLock::new(|| {
     HashMap::from([
         (
@@ -60,7 +61,7 @@ static ROUNDING_CONFIG: LazyLock<HashMap<Decimal, RoundConfig>> = LazyLock::new(
             RoundConfig {
                 price: 1,
                 size: 2,
-                amount: 2,  // USDC requires max 2 decimals
+                amount: 3,  // USDC requires 3 decimals for maker_amount (API validated)
             },
         ),
         (
@@ -68,7 +69,7 @@ static ROUNDING_CONFIG: LazyLock<HashMap<Decimal, RoundConfig>> = LazyLock::new(
             RoundConfig {
                 price: 2,
                 size: 2,
-                amount: 2,  // USDC requires max 2 decimals (was 4, causing "invalid amounts" API errors)
+                amount: 3,  // USDC requires 3 decimals for maker_amount (API validated)
             },
         ),
         (
@@ -76,7 +77,7 @@ static ROUNDING_CONFIG: LazyLock<HashMap<Decimal, RoundConfig>> = LazyLock::new(
             RoundConfig {
                 price: 3,
                 size: 2,
-                amount: 2,  // USDC requires max 2 decimals
+                amount: 3,  // USDC requires 3 decimals for maker_amount
             },
         ),
         (
@@ -84,7 +85,7 @@ static ROUNDING_CONFIG: LazyLock<HashMap<Decimal, RoundConfig>> = LazyLock::new(
             RoundConfig {
                 price: 4,
                 size: 2,
-                amount: 2,  // USDC requires max 2 decimals
+                amount: 3,  // USDC requires 3 decimals for maker_amount
             },
         ),
     ])
