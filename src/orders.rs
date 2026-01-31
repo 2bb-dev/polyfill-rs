@@ -50,10 +50,10 @@ pub struct OrderBuilder {
 }
 
 /// Rounding configurations for different tick sizes
-/// Note: For BUY orders, maker_amount is USDC. API requires exact precision (3 decimals).
+/// Note: For BUY orders, maker_amount is USDC. API requires full precision (4 decimals).
+///       size(2dp) × price(2dp) = amount(4dp max), e.g., 33.59 × 0.62 = 20.8258
 ///       For SELL orders, taker_amount is USDC (max 4 decimals per API).
 /// The 'amount' field controls rounding for the computed USDC amount (price * size).
-/// Setting to 3 decimals to match API expectation (e.g., 29.99 @ 0.60 = 17.994, not 17.99).
 static ROUNDING_CONFIG: LazyLock<HashMap<Decimal, RoundConfig>> = LazyLock::new(|| {
     HashMap::from([
         (
@@ -61,7 +61,7 @@ static ROUNDING_CONFIG: LazyLock<HashMap<Decimal, RoundConfig>> = LazyLock::new(
             RoundConfig {
                 price: 1,
                 size: 2,
-                amount: 3,  // USDC requires 3 decimals for maker_amount (API validated)
+                amount: 4,  // size(2dp) × price(Ndp) needs full precision
             },
         ),
         (
@@ -69,7 +69,7 @@ static ROUNDING_CONFIG: LazyLock<HashMap<Decimal, RoundConfig>> = LazyLock::new(
             RoundConfig {
                 price: 2,
                 size: 2,
-                amount: 3,  // USDC requires 3 decimals for maker_amount (API validated)
+                amount: 4,  // 33.59 × 0.62 = 20.8258 (4dp required)
             },
         ),
         (
@@ -77,7 +77,7 @@ static ROUNDING_CONFIG: LazyLock<HashMap<Decimal, RoundConfig>> = LazyLock::new(
             RoundConfig {
                 price: 3,
                 size: 2,
-                amount: 3,  // USDC requires 3 decimals for maker_amount
+                amount: 4,  // size(2dp) × price(3dp) needs up to 5dp, capped at 4
             },
         ),
         (
@@ -85,7 +85,7 @@ static ROUNDING_CONFIG: LazyLock<HashMap<Decimal, RoundConfig>> = LazyLock::new(
             RoundConfig {
                 price: 4,
                 size: 2,
-                amount: 3,  // USDC requires 3 decimals for maker_amount
+                amount: 4,  // size(2dp) × price(4dp) needs up to 6dp, capped at 4
             },
         ),
     ])
