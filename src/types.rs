@@ -457,6 +457,56 @@ pub struct MakerOrderInfo {
     pub price: String,
 }
 
+/// Custom deserializer for maker_orders that handles both single object and array
+fn deserialize_maker_orders<'de, D>(deserializer: D) -> std::result::Result<Vec<MakerOrderInfo>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::de::{self, Visitor};
+    
+    struct MakerOrdersVisitor;
+    
+    impl<'de> Visitor<'de> for MakerOrdersVisitor {
+        type Value = Vec<MakerOrderInfo>;
+        
+        fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+            formatter.write_str("a single maker order object or an array of maker orders")
+        }
+        
+        fn visit_seq<A>(self, seq: A) -> std::result::Result<Self::Value, A::Error>
+        where
+            A: de::SeqAccess<'de>,
+        {
+            Vec::deserialize(de::value::SeqAccessDeserializer::new(seq))
+        }
+        
+        fn visit_map<M>(self, map: M) -> std::result::Result<Self::Value, M::Error>
+        where
+            M: de::MapAccess<'de>,
+        {
+            // Single object case - wrap in a vec
+            let single = MakerOrderInfo::deserialize(de::value::MapAccessDeserializer::new(map))?;
+            Ok(vec![single])
+        }
+        
+        fn visit_none<E>(self) -> std::result::Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            Ok(Vec::new())
+        }
+        
+        fn visit_unit<E>(self) -> std::result::Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            Ok(Vec::new())
+        }
+    }
+    
+    deserializer.deserialize_any(MakerOrdersVisitor)
+}
+
 /// User channel TRADE message from Polymarket WebSocket
 /// This is the format returned on fills via the user channel
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -467,8 +517,9 @@ pub struct UserTradeMessage {
     pub id: String,
     #[serde(default)]
     pub last_update: Option<String>,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_maker_orders")]
     pub maker_orders: Vec<MakerOrderInfo>,
+
     pub market: String,
     #[serde(default)]
     pub matchtime: Option<String>,
@@ -484,6 +535,9 @@ pub struct UserTradeMessage {
     pub timestamp: Option<String>,
     #[serde(default)]
     pub trade_owner: Option<String>,
+    /// Indicates if we are MAKER or TAKER for this trade
+    #[serde(default)]
+    pub trader_side: Option<String>,
     #[serde(rename = "type")]
     pub message_type: String,
 }

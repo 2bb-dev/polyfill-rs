@@ -93,6 +93,10 @@ harness = false
 name = "network_benchmarks"
 harness = false
 
+[[bench]]
+name = "ws_optimization_benchmark"
+harness = false
+
 [profile.release]
 # Optimizations for HFT performance
 opt-level = 3
